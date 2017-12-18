@@ -302,7 +302,7 @@ class ArticlesApiResourceArticle extends ApiResource
 			$article->catid = $data['catid'];
 			$article->publish_up = $app->input->get('publish_up', '', 'STRING');
 			$article->publish_down = $app->input->get('publish_down', '', 'STRING');
-			$article->language = $app->input->get('language', '', 'STRING');
+			$article->language = $data['language'];
       $article->com_fields = $app->input->get('com_fields', [], 'ARRAY' );
 		}
 
