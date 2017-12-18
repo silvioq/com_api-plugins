@@ -80,59 +80,59 @@ class CategoriesApiResourceCategories extends ApiResource
 
 			return $obj;
 		}
-		if (empty($app->input->get('extension', '', 'STRING')))
-		{
-			$obj->code = 'ER002';
-			$obj->message = 'Extension Field is Missing';
-
-			return $obj;
-		}
-
-		
 		if ($cat_id)
 		{
-			$category = JTable::getInstance('Content', 'JTable', array());
+			$category = JTable::getInstance('Category', 'JTable', array());
 			$category->load($cat_id);
 			$data = array(
-			'title' => $app->input->get('title', '', 'STRING'),
+			'title' => $app->input->get('title', $category->title, 'STRING'),
+			'parent_id' => $app->input->get('parent_id', $category->parent_id, 'INT'),
 		);
 
 			// Bind data
-			if (!$cat_id->bind($data))
+			if (!$category->bind($data))
 			{
-				$this->setError($article->getError());
-				return false;
+		    $obj = new stdclass;
+        $obj->success = false;
+        $obj->message = $category->getError();
+        return $obj;
 			}
 		}
 		else
 		{
-			$category = JTable::getInstance('content');
+			$category = JTable::getInstance('category');
 			$category->title = $app->input->get('title', '', 'STRING');
 			$category->alias = $app->input->get('alias', '', 'STRING');
-			$category->description = $app->input->get('description', '', 'STRING');
-			$category->published = $app->input->get('published', '', 'STRING');
-			$category->parent_id = $app->input->get('parent_id', '', 'STRING');
-			$category->extension = $app->input->get('language', '', 'INT');
+      $category->description = $app->input->get('description', '', 'STRING');
+      $category->published = $app->input->get('published', 1, 'INT');
+			$category->parent_id = (int)$app->input->get('parent_id', '', 'STRING');
+			$category->extension = "com_content";
 			$category->access = $app->input->get('catid', '', 'INT');
+      $category->setLocation($category->parent_id, 'last-child');
 		}
 
 		// Check the data.
 		if (!$category->check())
 		{
-			$this->setError($category->getError());
-
-			return false;
+		  $obj = new stdclass;
+      $obj->success = false;
+      $obj->message = $category->getError();
+      return $obj;
 		}
 
 		// Store the data.
+    $dispatcher = JEventDispatcher::getInstance();
+    $dispatcher->trigger("onContentBeforeSave",array('com_content.category',$category, !!$cat_id ));
 		if (!$category->store())
 		{
-			$this->setError($category->getError());
-
-			return false;
+		  $obj = new stdclass;
+      $obj->success = false;
+      $obj->message = $category->getError();
+      return $obj;
 		}
+    $dispatcher->trigger("onContentAfterSave",array('com_content.category',$category, !!$cat_id ));
 
-		//return true;
+		return (object)$category;
 	}
 	
 }
