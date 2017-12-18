@@ -8,6 +8,7 @@
 defined('_JEXEC') or die( 'Restricted access' );
 require_once JPATH_SITE . '/components/com_content/models/articles.php';
 require_once JPATH_SITE . '/components/com_content/models/article.php';
+JLoader::register('FieldsHelper', JPATH_ADMINISTRATOR . '/components/com_fields/helpers/fields.php');
 
 /**
  * Articles Resource
@@ -164,6 +165,15 @@ class ArticlesApiResourceArticle extends ApiResource
 			}
 
 			$data[$subKey]->tags = $subArray->tags;
+      $data[$subKey]->jcfields = [];
+
+      $fields = FieldsHelper::getFields('com_content.article', $subArray, true);
+      if( is_array($fields) ){
+        foreach( $fields as $jcfield ){
+          $data[$subKey]->jcfields[$jcfield->name] = $jcfield->value;
+        }
+      }
+
 		}
 
 		$obj = new stdclass;
@@ -216,9 +226,10 @@ class ArticlesApiResourceArticle extends ApiResource
 		$obj = new stdclass;
 
 		$app = JFactory::getApplication();
+    $app->setLanguageFilter(false);
 		$article_id = $app->input->get('id', 0, 'INT');
 
-		if (empty($app->input->get('title', '', 'STRING')))
+		if (!$article_id && empty($app->input->get('title', '', 'STRING')))
 		{
 			$obj->success = false;
 			$obj->message = 'Title is Missing';
@@ -226,7 +237,7 @@ class ArticlesApiResourceArticle extends ApiResource
 			return $obj;
 		}
 
-		if (empty($app->input->get('introtext', '', 'STRING')))
+		if (!$article_id && empty($app->input->get('introtext', '', 'STRING')))
 		{
 			$obj->success = false;
 			$obj->message = 'Introtext is Missing';
@@ -234,7 +245,7 @@ class ArticlesApiResourceArticle extends ApiResource
 			return $obj;
 		}
 
-		if (empty($app->input->get('catid', '', 'INT')))
+		if (!$article_id && empty($app->input->get('catid', '', 'INT')))
 		{
 			$obj->success = false;
 			$obj->message = 'Category id is Missing';
@@ -247,15 +258,16 @@ class ArticlesApiResourceArticle extends ApiResource
 			$article = JTable::getInstance('Content', 'JTable', array());
 			$article->load($article_id);
 			$data = array(
-			'title' => $app->input->get('title', '', 'STRING'),
-			'alias' => $app->input->get('alias', '', 'STRING'),
-			'introtext' => $app->input->get('introtext', '', 'STRING'),
-			'fulltext' => $app->input->get('fulltext', '', 'STRING'),
-			'state' => $app->input->get('state', '', 'INT'),
-			'catid' => $app->input->get('catid', '', 'INT'),
-			'publish_up' => $app->input->get('publish_up', '', 'STRING'),
-			'publish_down' => $app->input->get('publish_down', '', 'STRING'),
-			'language' => $app->input->get('language', '', 'STRING')
+			'title' => $app->input->get('title', $article->title, 'STRING'),
+			'alias' => $app->input->get('alias', $article->alias, 'STRING'),
+			'introtext' => $app->input->get('introtext', $article->introtext, 'STRING'),
+			'fulltext' => $app->input->get('fulltext', $article->fulltext, 'STRING'),
+			'state' => $app->input->get('state', $article->state, 'INT'),
+			'catid' => $app->input->get('catid', $article->catid, 'INT'),
+			'publish_up' => $app->input->get('publish_up', $article->publish_up, 'STRING'),
+			'publish_down' => $app->input->get('publish_down', $article->publish_down, 'STRING'),
+			'language' => $app->input->post->get('language', $article->language, 'STRING'),
+      'com_fields' => $app->input->get('com_fields', [], 'ARRAY' )
 			);
 
 			// Bind data
@@ -269,16 +281,29 @@ class ArticlesApiResourceArticle extends ApiResource
 		}
 		else
 		{
+			$data = array(
+			'title' => $app->input->get('title', '', 'STRING'),
+			'alias' => $app->input->get('alias', '', 'STRING'),
+			'introtext' => $app->input->get('introtext', '', 'STRING'),
+			'fulltext' => $app->input->get('fulltext', '', 'STRING'),
+			'state' => $app->input->get('state', '', 'INT'),
+			'catid' => $app->input->get('catid', '', 'INT'),
+			'publish_up' => $app->input->get('publish_up', '', 'STRING'),
+			'publish_down' => $app->input->get('publish_down', '', 'STRING'),
+			'language' => $app->input->post->get('language', '*', 'STRING'),
+      'com_fields' => $app->input->get('com_fields', [], 'ARRAY' )
+			);
 			$article = JTable::getInstance('content');
-			$article->title = $app->input->get('title', '', 'STRING');
-			$article->alias = $app->input->get('alias', '', 'STRING');
+			$article->title = $data['title'];
+			$article->alias = $data['alias'];
 			$article->introtext = $app->input->get('introtext', '', 'STRING');
 			$article->fulltext = $app->input->get('fulltext', '', 'STRING');
-			$article->state = $app->input->get('state', '', 'INT');
-			$article->catid = $app->input->get('catid', '', 'INT');
+			$article->state = $data['state'];
+			$article->catid = $data['catid'];
 			$article->publish_up = $app->input->get('publish_up', '', 'STRING');
 			$article->publish_down = $app->input->get('publish_down', '', 'STRING');
 			$article->language = $app->input->get('language', '', 'STRING');
+      $article->com_fields = $app->input->get('com_fields', [], 'ARRAY' );
 		}
 
 		// Check the data.
@@ -290,6 +315,8 @@ class ArticlesApiResourceArticle extends ApiResource
 			return $obj;
 		}
 
+    $dispatcher = JEventDispatcher::getInstance();
+    $dispatcher->trigger("onContentBeforeSave",array('com_content.article',$article, !!$article_id, $data ));
 		// Store the data.
 		if (!$article->store())
 		{
@@ -298,6 +325,7 @@ class ArticlesApiResourceArticle extends ApiResource
 
 			return $obj;
 		}
+    $dispatcher->trigger("onContentAfterSave",array('com_content.article',$article, !!$article_id, $data ));
 
 		$images = json_decode($article->images);
 
