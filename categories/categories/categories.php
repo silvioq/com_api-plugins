@@ -45,13 +45,10 @@ class CategoriesApiResourceCategories extends ApiResource
 	{
 		/*$model_categories = JCategories::getInstance('Content');
 		$root = $model_categories->get('root');
-		$categories = $root->getChildren();*/
-		
-		$model_categories = JCategories::getInstance('Content');
-		$root = $model_categories->get('root');
-		$categories = $root->getChildren(true);
-	
-		return $categories;
+		$categories = $root->getChildren();
+		return $categories;*/
+    $model = new CategoriesModelCategories;
+    return $model->getItems();
 		
 	}
 	/**
@@ -107,8 +104,10 @@ class CategoriesApiResourceCategories extends ApiResource
       $category->published = $app->input->get('published', 1, 'INT');
 			$category->parent_id = (int)$app->input->get('parent_id', '', 'STRING');
 			$category->extension = "com_content";
-			$category->access = $app->input->get('catid', '', 'INT');
+			$category->access = 1;//$app->input->get('catid', '', 'INT');
       $category->setLocation($category->parent_id, 'last-child');
+      $category->params = '{"category_layout":"_:default","image":"","image_alt":""}';
+      $category->language = '*';
 		}
 
 		// Check the data.
