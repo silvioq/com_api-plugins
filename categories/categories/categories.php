@@ -84,6 +84,7 @@ class CategoriesApiResourceCategories extends ApiResource
 			$data = array(
 			'title' => $app->input->get('title', $category->title, 'STRING'),
 			'parent_id' => $app->input->get('parent_id', $category->parent_id, 'INT'),
+      'published' =>  $app->input->get('published', 1, 'INT'),
 		);
 
 			// Bind data
@@ -94,6 +95,7 @@ class CategoriesApiResourceCategories extends ApiResource
         $obj->message = $category->getError();
         return $obj;
 			}
+      $category->setLocation($category->parent_id, 'last-child');
 		}
 		else
 		{
