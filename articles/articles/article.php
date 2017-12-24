@@ -83,6 +83,7 @@ class ArticlesApiResourceArticle extends ApiResource
         if ($catid)
         {
             $art_obj->setState('filter.category_id', $catid);
+            $art_obj->setState('filter.subcategories', true);
         }
 
         if ($search)
