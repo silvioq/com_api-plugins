@@ -38,7 +38,7 @@ class ArticlesApiResourceArticle extends ApiResource
      */
     public function delete()
     {
-        $this->plugin->setResponse('in delete');
+        $this->plugin->setResponse($this->deleteArticle());
     }
 
     /**
@@ -178,7 +178,7 @@ class ArticlesApiResourceArticle extends ApiResource
 
         }
 
-    return $data;
+        return $data;
     }
 
     /**
@@ -196,7 +196,7 @@ class ArticlesApiResourceArticle extends ApiResource
     /**
      * CreateUpdateArticle is to create / upadte article
      *
-     * @return  Bolean
+     * @return  stdClass
      *
      * @since  3.5
      */
@@ -317,13 +317,34 @@ class ArticlesApiResourceArticle extends ApiResource
         }
 
         $article->images = $images;
-        $result = new stdClass;
-        $result->results = $article;
-
         $obj->success = true;
-        $obj->data = $result;
+        $obj->data = $article;
 
         return $obj;
+    }
+
+
+    /**
+     * Delete an article
+     *
+     * @return stdClass
+     */
+    public function deleteArticle()
+    {
+        if (version_compare(JVERSION, '3.0', 'lt')) {
+            JTable::addIncludePath(JPATH_PLATFORM . 'joomla/database/table');
+        }
+
+        $app = JFactory::getApplication();
+        $article_id = $app->input->get('id', 0, 'INT');
+        if ($article_id) {
+            $article = JTable::getInstance('Content', 'JTable', array());
+            $article->delete($article_id);
+
+            return (object)[ 'success' => true ];
+        }
+
+        return (object)[ 'success' => false, 'message' => 'No article id'];
     }
 }
 // vim:sw=4 ts=4 sts=4 et
