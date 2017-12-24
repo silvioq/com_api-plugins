@@ -123,10 +123,11 @@ class ArticlesApiResourceArticle extends ApiResource
 		$rows = $art_obj->getItems();
 
 		$num_articles = $art_obj->getTotal();
-		$data[] = new stdClass;
+		$data = [];
 
 		foreach ($rows as $subKey => $subArray)
 		{
+      $data[$subKey] = new \stdClass();
 			$data[$subKey]->id = $subArray->id;
 			$data[$subKey]->title = $subArray->title;
 			$data[$subKey]->alias = $subArray->alias;
@@ -176,25 +177,7 @@ class ArticlesApiResourceArticle extends ApiResource
 
 		}
 
-		$obj = new stdclass;
-		$result = new stdClass;
-
-		if (count($data) > 0)
-		{
-			$result->results = $data;
-			$result->total = $num_articles;
-			$obj->success = true;
-			$obj->data = $result;
-
-			return $obj;
-		}
-		else
-		{
-			$obj->success = false;
-			$obj->message = 'System does not have articles';
-		}
-
-		return $obj;
+    return $data;
 	}
 
 	/**
