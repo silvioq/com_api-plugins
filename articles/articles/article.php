@@ -128,13 +128,13 @@ class ArticlesApiResourceArticle extends ApiResource
 
         foreach ($rows as $subKey => $subArray)
         {
-      $data[$subKey] = new \stdClass();
+            $data[$subKey] = new \stdClass();
             $data[$subKey]->id = $subArray->id;
             $data[$subKey]->title = $subArray->title;
             $data[$subKey]->alias = $subArray->alias;
             $data[$subKey]->introtext = $subArray->introtext;
             $data[$subKey]->fulltext = $subArray->fulltext;
-            $data[$subKey]->catid = array('catid' => $subArray->catid, 'title' => $subArray->category_title);
+            $data[$subKey]->category = array('catid' => $subArray->catid, 'title' => $subArray->category_title);
             $data[$subKey]->state = $subArray->state;
             $data[$subKey]->created = $subArray->created;
             $data[$subKey]->modified = $subArray->modified;
@@ -167,14 +167,14 @@ class ArticlesApiResourceArticle extends ApiResource
             }
 
             $data[$subKey]->tags = $subArray->tags;
-      $data[$subKey]->jcfields = [];
+            $data[$subKey]->jcfields = [];
 
-      $fields = FieldsHelper::getFields('com_content.article', $subArray, true);
-      if( is_array($fields) ){
-        foreach( $fields as $jcfield ){
-          $data[$subKey]->jcfields[$jcfield->name] = $jcfield->value;
-        }
-      }
+            $fields = FieldsHelper::getFields('com_content.article', $subArray, true);
+            if( is_array($fields) ){
+                foreach( $fields as $jcfield ){
+                    $data[$subKey]->jcfields[$jcfield->name] = $jcfield->value;
+                }
+            }
 
         }
 
