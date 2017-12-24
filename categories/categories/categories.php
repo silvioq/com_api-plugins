@@ -82,6 +82,7 @@ class CategoriesApiResourceCategories extends ApiResource
         {
             $category = JTable::getInstance('Category', 'JTable', array());
             $category->load($cat_id);
+            $currentParentId = $category->parent_id;
             $data = array(
                 'title' => $app->input->get('title', $category->title, 'STRING'),
                 'parent_id' => $app->input->get('parent_id', $category->parent_id, 'INT'),
@@ -89,14 +90,16 @@ class CategoriesApiResourceCategories extends ApiResource
             );
 
             // Bind data
-            if (!$category->bind($data))
-            {
+            if (!$category->bind($data)) {
                 $obj = new stdclass;
                 $obj->success = false;
                 $obj->message = $category->getError();
                 return $obj;
             }
-            $category->setLocation($category->parent_id, 'last-child');
+
+            if( $category->parent_id != $currentParentId ) {
+                $category->setLocation($category->parent_id, 'last-child');
+            }
         }
         else
         {
@@ -132,7 +135,10 @@ class CategoriesApiResourceCategories extends ApiResource
         }
         $dispatcher->trigger("onContentAfterSave",array('com_content.category',$category, !!$cat_id ));
 
-        return (object)$category;
+        return (object)[
+            'success' => true,
+            'data' => (object)$category,
+        ];
     }
     
 }
