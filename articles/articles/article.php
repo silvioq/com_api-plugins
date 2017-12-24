@@ -84,6 +84,7 @@ class ArticlesApiResourceArticle extends ApiResource
         {
             $art_obj->setState('filter.category_id', $catid);
             $art_obj->setState('filter.subcategories', true);
+            $art_obj->setState('filter.max_category_levels', 100);
         }
 
         if ($search)
@@ -219,12 +220,12 @@ class ArticlesApiResourceArticle extends ApiResource
             return $obj;
         }
 
-        if (!$article_id && empty($app->input->get('introtext', '', 'STRING'))) {
-            $obj->success = false;
-            $obj->message = 'Introtext is Missing';
-
-            return $obj;
-        }
+        # if (!$article_id && empty($app->input->get('introtext', '', 'STRING'))) {
+        #     $obj->success = false;
+        #     $obj->message = 'Introtext is Missing';
+        #
+        #     return $obj;
+        # }
 
         if (!$article_id && empty($app->input->get('catid', '', 'INT'))) {
             $obj->success = false;
